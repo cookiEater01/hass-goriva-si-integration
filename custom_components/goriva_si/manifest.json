@@ -1,11 +1,11 @@
 {
-    "domain": "goriva_si",
-    "name": "Cene naftnih derivatov",
-    "config_flow": false,
-    "documentation": "https://github.com/cookiEater01/hass-goriva-si-integration",
-    "version": "0.0.0",
-    "codeowners": [
-      "@cookiEater01"
-    ],
-    "iot_class": "cloud_polling"
-  }
+  "domain": "goriva_si",
+  "name": "Cene naftnih derivatov",
+  "config_flow": false,
+  "documentation": "https://github.com/cookiEater01/hass-goriva-si-integration",
+  "version": "0.0.1",
+  "codeowners": [
+    "@cookiEater01"
+  ],
+  "iot_class": "cloud_polling"
+}
