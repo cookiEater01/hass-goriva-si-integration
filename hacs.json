@@ -4,5 +4,6 @@
     "domains": [
         "sensor"
     ],
+    "render_readme": true,
     "homeassistant": "0.118.0"
 }
