@@ -71,7 +71,6 @@ async def async_setup_platform(
 
     for station in stations:
         for fuel in slo_fuel_prices.fuel_types:
-            _LOGGER.info("SloFuelPrices: setting for fuel %s", fuel)
             if fuel not in station["prices"]:
                 _LOGGER.warning(
                     "Station %s does not offer %s fuel", station["pk"], fuel
@@ -92,7 +91,6 @@ async def async_setup_platform(
             sensor = FuelStationByFuelSensor(
                 coordinator, station, fuel, f"{name}_{fuel}"
             )
-            _LOGGER.info("SloFuelPrices: got sensor object: %s", sensor)
             entities.append(sensor)
 
     _LOGGER.info("Added sensors %s", entities)
@@ -105,7 +103,6 @@ class FuelStationByFuelSensor(CoordinatorEntity, SensorEntity):
 
     def __init__(self, coordinator, station, fuel_type, name):
         """Initialize the sensor."""
-        _LOGGER.info("SloFuelPrices: Initialize station %s", station)
         super().__init__(coordinator)
         self._station = station
         self._station_id = f"{station['pk']}_{fuel_type}"
@@ -116,11 +113,6 @@ class FuelStationByFuelSensor(CoordinatorEntity, SensorEntity):
         self._address = station["address"]
         self._zip_code = station["zip_code"]
         self._fuel_type = fuel_type
-        _LOGGER.info(
-            "SloFuelPrices: setting fuel %s price %s",
-            fuel_type,
-            station["prices"][fuel_type],
-        )
         self._price = station["prices"][fuel_type]
 
     @property
@@ -147,8 +139,6 @@ class FuelStationByFuelSensor(CoordinatorEntity, SensorEntity):
     def native_value(self):
         """Return the state of the device."""
         # key Fuel_type is not available when the fuel station is closed, use "get" instead of "[]" to avoid exceptions
-        _LOGGER.info("Native value %s", str(self._price))
-        _LOGGER.info("Coordinator %s", str(self.coordinator.data[self._fuel_type]))
         # return self.coordinator.data[self._station_id].get(self._price)
         return self.coordinator.data[self._fuel_type]
 

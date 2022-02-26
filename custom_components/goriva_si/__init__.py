@@ -63,7 +63,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     conf = config[DOMAIN]
 
-    _LOGGER.debug("SloFuelPrices: Setting up integration")
+    _LOGGER.debug("Setting up integration")
 
     goriva_si = GorivaSiData(hass, conf)
 
@@ -104,12 +104,9 @@ class GorivaSiData:
     def add_station(self, station: dict):
         """Add fuel station to the list."""
 
-        _LOGGER.info("SloFuelPrices: add station")
-        _LOGGER.info(station)
+        _LOGGER.debug("add station")
 
         station_id = station["pk"]
-
-        _LOGGER.info("SloFuelPrices: %s", station_id)
 
         if station_id in self.stations:
             _LOGGER.warning(
@@ -122,7 +119,7 @@ class GorivaSiData:
     def setup(self):
         """Read the initial data from the server, to initialize the list of stations."""
 
-        _LOGGER.info("SloFuelPrices: setup")
+        _LOGGER.debug("setup")
 
         url = (
             "https://goriva.si/api/v1/search/?position="
@@ -138,10 +135,10 @@ class GorivaSiData:
         else:
             for station in found_stations:
                 if self.only_stations and station["pk"] in self.only_stations:
-                    _LOGGER.info("SloFuelPrices: adding station that is on the list")
+                    _LOGGER.debug("adding station that is on the list")
                     self.add_station(station)
                 elif not self.only_stations:
-                    _LOGGER.info("SloFuelPrices: adding station")
+                    _LOGGER.debug("adding station")
                     self.add_station(station)
 
         return True
@@ -149,7 +146,7 @@ class GorivaSiData:
     async def fetch_data(self):
         """Get the latest data from goriva.si API."""
 
-        _LOGGER.info("SloFuelPrices: fetch_data")
+        _LOGGER.info("Updating petrol station prices from goriva.si")
 
         prices = {}
 
@@ -161,7 +158,6 @@ class GorivaSiData:
         )
 
         data = await self._hass.async_add_executor_job(get_data, url)
-        _LOGGER.info("SloFuelPrices: received data: %s", data)
 
         for station in data["results"]:
             fp = station["prices"]
