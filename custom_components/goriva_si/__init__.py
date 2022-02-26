@@ -104,7 +104,7 @@ class GorivaSiData:
     def add_station(self, station: dict):
         """Add fuel station to the list."""
 
-        _LOGGER.debug("add station")
+        _LOGGER.debug("Adding new station with pk: %s", str(station["pk"]))
 
         station_id = station["pk"]
 
@@ -119,7 +119,7 @@ class GorivaSiData:
     def setup(self):
         """Read the initial data from the server, to initialize the list of stations."""
 
-        _LOGGER.debug("setup")
+        _LOGGER.info("Setup of goriva_si integration")
 
         url = (
             "https://goriva.si/api/v1/search/?position="
@@ -135,10 +135,8 @@ class GorivaSiData:
         else:
             for station in found_stations:
                 if self.only_stations and station["pk"] in self.only_stations:
-                    _LOGGER.debug("adding station that is on the list")
                     self.add_station(station)
                 elif not self.only_stations:
-                    _LOGGER.debug("adding station")
                     self.add_station(station)
 
         return True
@@ -146,7 +144,7 @@ class GorivaSiData:
     async def fetch_data(self):
         """Get the latest data from goriva.si API."""
 
-        _LOGGER.info("Updating petrol station prices from goriva.si")
+        _LOGGER.info("Fetching data from goriva.si API")
 
         prices = {}
 
@@ -160,7 +158,5 @@ class GorivaSiData:
         data = await self._hass.async_add_executor_job(get_data, url)
 
         for station in data["results"]:
-            fp = station["prices"]
-            prices.update(fp)
-
+            prices[station["pk"]] = station["prices"]
         return prices

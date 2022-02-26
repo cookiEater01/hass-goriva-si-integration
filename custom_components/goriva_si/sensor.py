@@ -45,13 +45,15 @@ async def async_setup_platform(
     if discovery_info is None:
         return
 
-    slo_fuel_prices = hass.data[DOMAIN]
+    goriva = hass.data[DOMAIN]
 
     async def async_update_data():
         """Fetch data from goriva.si API"""
 
         try:
-            return await slo_fuel_prices.fetch_data()
+            _LOGGER.debug("Requesting update")
+            response = await goriva.fetch_data()
+            return response
         except LookupError as err:
             raise UpdateFailed("Failed to fetch data") from err
 
@@ -60,17 +62,19 @@ async def async_setup_platform(
         _LOGGER,
         name=NAME,
         update_method=async_update_data,
-        update_interval=slo_fuel_prices.update_interval,
+        update_interval=goriva.update_interval,
     )
 
     # Fetch initial data so we have data when entities subscribe
     await coordinator.async_refresh()
 
+    _LOGGER.info("Coordinator First: %s", coordinator.data)
+
     stations = discovery_info.values()
     entities = []
 
     for station in stations:
-        for fuel in slo_fuel_prices.fuel_types:
+        for fuel in goriva.fuel_types:
             if fuel not in station["prices"]:
                 _LOGGER.warning(
                     "Station %s does not offer %s fuel", station["pk"], fuel
@@ -106,6 +110,7 @@ class FuelStationByFuelSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._station = station
         self._station_id = f"{station['pk']}_{fuel_type}"
+        self._station_pk = station["pk"]
         self._name = name
         self._latitude = station["lat"]
         self._longitude = station["lng"]
@@ -140,7 +145,7 @@ class FuelStationByFuelSensor(CoordinatorEntity, SensorEntity):
         """Return the state of the device."""
         # key Fuel_type is not available when the fuel station is closed, use "get" instead of "[]" to avoid exceptions
         # return self.coordinator.data[self._station_id].get(self._price)
-        return self.coordinator.data[self._fuel_type]
+        return self.coordinator.data[self._station_pk][self._fuel_type]
 
     @property
     def extra_state_attributes(self):
