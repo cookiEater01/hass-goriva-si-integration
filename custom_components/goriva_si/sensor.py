@@ -12,7 +12,7 @@ from homeassistant.const import (
     ATTR_LONGITUDE,
     CURRENCY_EURO,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import (
@@ -28,7 +28,7 @@ _LOGGER = logging.getLogger(__name__)
 ATTR_FRANCHISE = "franchise"
 ATTR_FUEL_TYPE = "fuel_type"
 ATTR_ZIP_CODE = "zip"
-ATTR_PRICE = "price"
+ATTR_OLD_PRICE = "old_price"
 ATTR_STATION_NAME = "station_name"
 ATTR_ADDRESS = "address"
 ATTRIBUTION = "Data provided by https://goriva.si"
@@ -118,7 +118,9 @@ class FuelStationByFuelSensor(CoordinatorEntity, SensorEntity):
         self._address = station["address"]
         self._zip_code = station["zip_code"]
         self._fuel_type = fuel_type
-        self._price = station["prices"][fuel_type]
+        """First load, both set to the same value."""
+        self._old_price = station["prices"][fuel_type]
+        self._now_price = station["prices"][fuel_type]
 
     @property
     def name(self):
@@ -143,9 +145,16 @@ class FuelStationByFuelSensor(CoordinatorEntity, SensorEntity):
     @property
     def native_value(self):
         """Return the state of the device."""
-        # key Fuel_type is not available when the fuel station is closed, use "get" instead of "[]" to avoid exceptions
-        # return self.coordinator.data[self._station_id].get(self._price)
-        return self.coordinator.data[self._station_pk][self._fuel_type]
+        # return self.coordinator.data[self._station_pk][self._fuel_type]
+        return self._now_price
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        _LOGGER.info("New old price: %s %s", str(self._now_price), CURRENCY_EURO)
+        self._old_price = f"{self._now_price}{CURRENCY_EURO}"
+        self._now_price = self.coordinator.data[self._station_pk][self._fuel_type]
+        self.async_write_ha_state()
 
     @property
     def extra_state_attributes(self):
@@ -156,7 +165,7 @@ class FuelStationByFuelSensor(CoordinatorEntity, SensorEntity):
             ATTR_ATTRIBUTION: ATTRIBUTION,
             ATTR_FRANCHISE: self._station["franchise"],
             ATTR_STATION_NAME: self._station["name"],
-            ATTR_PRICE: self._price,
+            ATTR_OLD_PRICE: self._old_price,
             ATTR_FUEL_TYPE: self._fuel_type,
             ATTR_ZIP_CODE: self._zip_code,
             ATTR_ADDRESS: self._address,
